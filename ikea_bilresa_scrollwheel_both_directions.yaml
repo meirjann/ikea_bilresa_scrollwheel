@@ -1,21 +1,21 @@
 blueprint:
-  name: "IKEA Bilresa Scroll Wheel – Pro (Scroll & Buttons)"
-  description: "Erweiterte Steuerung für Matter: Scroll-Logik mit Lock-Funktion und Center-Button Aktionen."
+  name: "IKEA Bilresa Scroll Wheel – IT-Sec Edition"
+  description: "Matter-basierte Steuerung mit Einschalt-Lock, Minimum-Brightness und Multi-Press Center Button."
   domain: automation
   input:
-    # --- Entities ---
-    scrollwheel_right_event_entity:
+    # Entities
+    scroll_right_event:
       name: "Scroll Wheel Event – Rechts"
       selector:
         entity:
           domain: event
-    scrollwheel_left_event_entity:
+    scroll_left_event:
       name: "Scroll Wheel Event – Links"
       selector:
         entity:
           domain: event
-    center_button_event_entity:
-      name: "Center Button Event Entity"
+    center_button_event:
+      name: "Center Button Event"
       selector:
         entity:
           domain: event
@@ -25,129 +25,126 @@ blueprint:
         entity:
           domain: light
 
-    # --- Scroll Settings ---
+    # Settings
     lock_when_off:
-      name: "Einschalt-Sperre"
-      description: "Wenn die Lampe aus ist, wird sie durch Drehen NICHT eingeschaltet."
+      name: "Lock wenn Aus"
+      description: "Verhindert das Einschalten durch Drehen, wenn die Lampe aus ist."
       default: true
       selector:
         boolean: {}
-    min_brightness_pct:
+    min_brightness:
       name: "Minimale Helligkeit (%)"
-      description: "Das Rad dimmt niemals unter diesen Wert (verhindert Ausschalten)."
+      description: "Die Lampe wird beim Runterdrehen nicht dunkler als dieser Wert."
       default: 10
       selector:
         number:
           min: 1
           max: 20
           unit_of_measurement: "%"
-    brightness_per_step:
-      name: "Schritte pro Scroll"
-      default: 5
-      selector:
-        number:
-          min: 1
-          max: 20
     
-    # --- Center Button Actions ---
-    press_1_action:
-      name: "Center Button: 1x Drücken"
+    # Actions for Center Button
+    action_single:
+      name: "1x Drücken"
       default: []
       selector:
         action: {}
-    press_2_action:
-      name: "Center Button: 2x Drücken"
+    action_double:
+      name: "2x Drücken"
       default: []
       selector:
         action: {}
-    press_3_action:
-      name: "Center Button: 3x Drücken"
+    action_triple:
+      name: "3x Drücken"
       default: []
       selector:
         action: {}
-    hold_action:
-      name: "Center Button: Halten"
+    action_hold:
+      name: "Halten"
       default: []
       selector:
         action: {}
 
 trigger:
   - platform: state
-    entity_id: !input scrollwheel_right_event_entity
+    entity_id: !input scroll_right_event
     id: "right"
   - platform: state
-    entity_id: !input scrollwheel_left_event_entity
+    entity_id: !input scroll_left_event
     id: "left"
   - platform: state
-    entity_id: !input center_button_event_entity
+    entity_id: !input center_button_event
     id: "center"
 
 action:
   - variables:
-      # Trigger Info
-      trigger_id: "{{ trigger.id }}"
-      event_type: "{{ state_attr(trigger.entity_id, 'event_type') }}"
-      
-      # Scroll Logik
+      # Inputs zu Variablen für Templates
       target_entity: !input target_light
+      btn_event_ent: !input center_button_event
+      lock_active: !input lock_when_off
+      min_bright: !input min_brightness
+      
+      # Status-Abfrage
       is_on: "{{ states(target_entity) == 'on' }}"
       current_pct: "{{ (state_attr(target_entity, 'brightness') | int(0) / 255 * 100) | round(0) }}"
-      lock_off: !input lock_when_off
-      min_bright: !input min_brightness_pct
-      step: !input brightness_per_step
       
-      # Press Count (Matter nutzt oft totalNumberOfPressesCounted bei Multi-Events)
+      # Event Daten
+      event_type: "{{ state_attr(trigger.entity_id, 'event_type') }}"
       press_count: "{{ trigger.to_state.attributes.totalNumberOfPressesCounted | int(1) }}"
 
   - choose:
-      # --- SCROLL LOGIK ---
-      - conditions: "{{ trigger_id in ['right', 'left'] }}"
-        sequence:
+      # --- SCROLL LOGIK (RECHTS) ---
+      - conditions:
           - condition: template
-            value_template: >
-              {# Falls Lock aktiv und Licht aus: Abbruch #}
-              {% if lock_off and not is_on %}
-                false
-              {% else %}
-                true
-              {% endif %}
-          - choose:
-              # Rechts drehen
-              - conditions: "{{ trigger_id == 'right' }}"
-                sequence:
-                  - service: light.turn_on
-                    target:
-                      entity_id: !input target_light
-                    data:
-                      brightness_step_pct: "{{ step * press_count }}"
-              # Links drehen
-              - conditions: "{{ trigger_id == 'left' }}"
-                sequence:
-                  - condition: template
-                    value_template: "{{ current_pct > min_bright }}"
-                  - service: light.turn_on
-                    target:
-                      entity_id: !input target_light
-                    data:
-                      # Wir nutzen turn_on mit negativem Step, damit die Lampe nicht hart ausgeht
-                      brightness_step_pct: "{{ (step * press_count) * -1 }}"
-
-      # --- CENTER BUTTON LOGIK ---
-      - conditions: "{{ trigger_id == 'center' }}"
+            value_template: "{{ trigger.id == 'right' }}"
+          - condition: template
+            # Lock Prüfung: Nur ausführen wenn an ODER Lock deaktiviert
+            value_template: "{{ is_on or not lock_active }}"
         sequence:
-          - choose:
-              # 1x Press (Matter: 'short_release' oder 'initial_press' je nach Gerät)
-              - conditions: "{{ event_type == 'short_release' or (event_type == 'initial_press' and press_count == 1) }}"
-                sequence: !input press_1_action
-              # 2x Press
-              - conditions: "{{ event_type == 'multi_press_2' or press_count == 2 }}"
-                sequence: !input press_2_action
-              # 3x Press
-              - conditions: "{{ event_type == 'multi_press_3' or press_count == 3 }}"
-                sequence: !input press_3_action
-              # Long Press / Hold
-              - conditions: "{{ event_type == 'long_press' }}"
-                sequence: !input hold_action
+          - service: light.turn_on
+            target:
+              entity_id: !input target_light
+            data:
+              brightness_step_pct: "{{ 5 * press_count }}"
+
+      # --- SCROLL LOGIK (LINKS) ---
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.id == 'left' and is_on }}"
+          - condition: template
+            # Stoppt bei Erreichen der Min-Brightness
+            value_template: "{{ current_pct > min_bright }}"
+        sequence:
+          - service: light.turn_on
+            target:
+              entity_id: !input target_light
+            data:
+              brightness_step_pct: "{{ -5 * press_count }}"
+
+      # --- CENTER BUTTON LOGIK (DEINE SYNTAX) ---
+      
+      # 1x Press
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.entity_id == btn_event_ent and (event_type == 'short_release' or event_type == 'multi_press_1') }}"
+        sequence: !input action_single
+
+      # 2x Press
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.entity_id == btn_event_ent and (event_type == 'multi_press_2' or press_count == 2) }}"
+        sequence: !input action_double
+
+      # 3x Press
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.entity_id == btn_event_ent and (event_type == 'multi_press_3' or press_count == 3) }}"
+        sequence: !input action_triple
+
+      # Hold
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.entity_id == btn_event_ent and event_type == 'long_press' }}"
+        sequence: !input action_hold
 
 mode: queued
 max: 20
