@@ -1,5 +1,5 @@
 blueprint:
-  name: "IKEA Bilresa Scroll Wheel – IT-Sec Edition"
+  name: "IKEA Bilresa Scroll Wheel – Rework"
   description: "Matter-basierte Steuerung mit Einschalt-Lock, Minimum-Brightness und Multi-Press Center Button."
   domain: automation
   input:
