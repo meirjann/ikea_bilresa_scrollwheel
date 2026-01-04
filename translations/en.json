@@ -1,0 +1,22 @@
+{
+  "title": "IKEA Bilresa Scroll Wheel – Rework",
+  "description": "Matter-based control with power-on lock, minimum brightness, and multi-press center button.",
+  "configuration": {
+    "scroll_right_event": { "name": "Scroll Wheel Event – Right" },
+    "scroll_left_event": { "name": "Scroll Wheel Event – Left" },
+    "center_button_event": { "name": "Center Button Event" },
+    "target_light": { "name": "Target Light" },
+    "lock_when_off": {
+      "name": "Lock when off",
+      "description": "Prevents turning on the light by rotating it when it is currently off."
+    },
+    "min_brightness": {
+      "name": "Minimum Brightness (%)",
+      "description": "The light will not go below this value when scrolling down."
+    },
+    "action_single": { "name": "Single Press" },
+    "action_double": { "name": "Double Press" },
+    "action_triple": { "name": "Triple Press" },
+    "action_hold": { "name": "Hold" }
+  }
+}
