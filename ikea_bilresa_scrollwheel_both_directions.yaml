@@ -1,16 +1,15 @@
 blueprint:
   name: "IKEA Bilresa Scroll Wheel – Rework"
-  description: "Matter-basierte Steuerung mit Einschalt-Lock, Minimum-Brightness und Multi-Press Center Button."
+  description: "Matter-based control with power-on lock, minimum brightness, and multi-press center button."
   domain: automation
   input:
-    # Entities
     scroll_right_event:
-      name: "Scroll Wheel Event – Rechts"
+      name: "Scroll Wheel Event – Right"
       selector:
         entity:
           domain: event
     scroll_left_event:
-      name: "Scroll Wheel Event – Links"
+      name: "Scroll Wheel Event – Left"
       selector:
         entity:
           domain: event
@@ -20,46 +19,42 @@ blueprint:
         entity:
           domain: event
     target_light:
-      name: "Ziellampe"
+      name: "Target Light"
       selector:
         entity:
           domain: light
-
-    # Settings
     lock_when_off:
-      name: "Lock wenn Aus"
-      description: "Verhindert das Einschalten durch Drehen, wenn die Lampe aus ist."
+      name: "Lock when off"
+      description: "Prevents turning on the light by rotating it when it is currently off."
       default: true
       selector:
         boolean: {}
     min_brightness:
-      name: "Minimale Helligkeit (%)"
-      description: "Die Lampe wird beim Runterdrehen nicht dunkler als dieser Wert."
+      name: "Minimum Brightness (%)"
+      description: "The light will not go below this value when scrolling down."
       default: 10
       selector:
         number:
           min: 1
           max: 20
           unit_of_measurement: "%"
-    
-    # Actions for Center Button
     action_single:
-      name: "1x Drücken"
+      name: "Single Press"
       default: []
       selector:
         action: {}
     action_double:
-      name: "2x Drücken"
+      name: "Double Press"
       default: []
       selector:
         action: {}
     action_triple:
-      name: "3x Drücken"
+      name: "Triple Press"
       default: []
       selector:
         action: {}
     action_hold:
-      name: "Halten"
+      name: "Hold"
       default: []
       selector:
         action: {}
@@ -77,27 +72,20 @@ trigger:
 
 action:
   - variables:
-      # Inputs zu Variablen für Templates
       target_entity: !input target_light
       btn_event_ent: !input center_button_event
       lock_active: !input lock_when_off
       min_bright: !input min_brightness
-      
-      # Status-Abfrage
       is_on: "{{ states(target_entity) == 'on' }}"
       current_pct: "{{ (state_attr(target_entity, 'brightness') | int(0) / 255 * 100) | round(0) }}"
-      
-      # Event Daten
       event_type: "{{ state_attr(trigger.entity_id, 'event_type') }}"
       press_count: "{{ trigger.to_state.attributes.totalNumberOfPressesCounted | int(1) }}"
 
   - choose:
-      # --- SCROLL LOGIK (RECHTS) ---
       - conditions:
           - condition: template
             value_template: "{{ trigger.id == 'right' }}"
           - condition: template
-            # Lock Prüfung: Nur ausführen wenn an ODER Lock deaktiviert
             value_template: "{{ is_on or not lock_active }}"
         sequence:
           - service: light.turn_on
@@ -106,12 +94,10 @@ action:
             data:
               brightness_step_pct: "{{ 5 * press_count }}"
 
-      # --- SCROLL LOGIK (LINKS) ---
       - conditions:
           - condition: template
             value_template: "{{ trigger.id == 'left' and is_on }}"
           - condition: template
-            # Stoppt bei Erreichen der Min-Brightness
             value_template: "{{ current_pct > min_bright }}"
         sequence:
           - service: light.turn_on
@@ -120,27 +106,21 @@ action:
             data:
               brightness_step_pct: "{{ -5 * press_count }}"
 
-      # --- CENTER BUTTON LOGIK (DEINE SYNTAX) ---
-      
-      # 1x Press
       - conditions:
           - condition: template
             value_template: "{{ trigger.entity_id == btn_event_ent and (event_type == 'short_release' or event_type == 'multi_press_1') }}"
         sequence: !input action_single
 
-      # 2x Press
       - conditions:
           - condition: template
             value_template: "{{ trigger.entity_id == btn_event_ent and (event_type == 'multi_press_2' or press_count == 2) }}"
         sequence: !input action_double
 
-      # 3x Press
       - conditions:
           - condition: template
             value_template: "{{ trigger.entity_id == btn_event_ent and (event_type == 'multi_press_3' or press_count == 3) }}"
         sequence: !input action_triple
 
-      # Hold
       - conditions:
           - condition: template
             value_template: "{{ trigger.entity_id == btn_event_ent and event_type == 'long_press' }}"
