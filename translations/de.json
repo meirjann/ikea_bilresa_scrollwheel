@@ -1,0 +1,22 @@
+{
+  "title": "IKEA Bilresa Scrollrad – Rework",
+  "description": "Matter-basierte Steuerung mit Einschalt-Lock, Minimum-Brightness und Multi-Press Center Button.",
+  "configuration": {
+    "scroll_right_event": { "name": "Scroll Wheel Event – Rechts" },
+    "scroll_left_event": { "name": "Scroll Wheel Event – Links" },
+    "center_button_event": { "name": "Center Button Event" },
+    "target_light": { "name": "Ziellampe" },
+    "lock_when_off": {
+      "name": "Lock wenn Aus",
+      "description": "Verhindert das Einschalten durch Drehen, wenn die Lampe aus ist."
+    },
+    "min_brightness": {
+      "name": "Minimale Helligkeit (%)",
+      "description": "Die Lampe wird beim Runterdrehen nicht dunkler als dieser Wert."
+    },
+    "action_single": { "name": "1x Drücken" },
+    "action_double": { "name": "2x Drücken" },
+    "action_triple": { "name": "3x Drücken" },
+    "action_hold": { "name": "Halten" }
+  }
+}
