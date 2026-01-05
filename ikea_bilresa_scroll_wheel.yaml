@@ -41,8 +41,7 @@ blueprint:
           domain:
             - light
             - number
-            - input_number
-
+            
     # --- Settings ---
     lock_when_off:
       name: "Lock when off / at minimum"
