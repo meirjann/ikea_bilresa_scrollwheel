@@ -2,7 +2,7 @@
 
 This Home Assistant blueprint is a precision-engineered rework for the **IKEA Bilresa Scroll Wheel** (Matter version). It solves common issues like inconsistent dimming steps and provides a "smart" interface for controlling various entity types automatically.
 
-[![Open your Home Assistant instance and show the blueprint import dialog with a specific blueprint pre-filled.](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://github.com/meirjann/ikea_bilresa_scrollwheel/main/ikea_bilresa_scroll_wheel.yaml)
+[![Open your Home Assistant instance and show the blueprint import dialog with a specific blueprint pre-filled.](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://github.com/meirjann/ikea_bilresa_scrollwheel/blob/main/ikea_bilresa_scroll_wheel.yaml)
 
 ## ✨ Features
 
