@@ -147,7 +147,7 @@ action:
                       brightness_pct: >
                         {% set calc = (current_val - (step_v * press_count)) | int %}
                         {% set minimum = min_v | int %}
-                        {{ [calc, minimum, 1] | max }}
+                        {{ [calc, minimum, 0] | max }}
               - conditions: "{{ not is_light }}"
                 sequence:
                   - service: "{{ domain }}.set_value"
