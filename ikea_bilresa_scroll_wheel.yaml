@@ -1,10 +1,11 @@
 blueprint:
-  name: "IKEA Bilresa Scroll Wheel – Universal Smart FINAL"
-  description: "Matter-based control. Automatic entity detection with robust clamping logic."
+  name: "IKEA Bilresa Scroll Wheel – Universal Smart FINAL (Precision Fix)"
+  description: "Matter-based control. Fixed rounding issues for precise 5% steps."
   domain: automation
   input:
+    # (Inputs bleiben identisch wie in deiner Vorlage)
     scroll_right_event:
-      name: "Scroll Wheel Event – Right Test"
+      name: "Scroll Wheel Event – Right"
       selector:
         entity:
           domain: event
@@ -81,22 +82,20 @@ trigger:
 
 action:
   - variables:
-      # Inputs direkt zuweisen
       target_ent: !input target_entity
       lock_act: !input lock_when_off
       min_v: !input min_value
       step_v: !input step_size
       
-      # Domain erkennen
       domain: "{{ target_ent.split('.')[0] }}"
       is_light: "{{ domain == 'light' }}"
       
-      # Aktuellen Wert sicher berechnen (Fallback auf 0)
+      # FIX: round(0) statt nur int, um 19.9% zu 20% zu machen statt zu 19%
       current_val: >
         {% if is_light %}
-          {{ (state_attr(target_ent, 'brightness') | int(0) / 255 * 100) | int }}
+          {{ (state_attr(target_ent, 'brightness') | int(0) / 2.55) | round(0) | int }}
         {% else %}
-          {{ states(target_ent) | float(0) | int }}
+          {{ states(target_ent) | float(0) | round(0) | int }}
         {% endif %}
       
       is_on: "{{ states(target_ent) == 'on' }}"
@@ -104,12 +103,11 @@ action:
       event_type: "{{ state_attr(trigger.entity_id, 'event_type') }}"
 
   - choose:
-      # --- RECHTS DREHEN (Erhöhen) ---
+      # --- RECHTS DREHEN ---
       - conditions:
           - condition: template
             value_template: "{{ trigger.id == 'right' }}"
           - condition: template
-            # Bei Licht: Lock prüfen. Sonst immer wahr.
             value_template: "{{ not is_light or (is_on or not lock_act) }}"
         sequence:
           - choose:
@@ -126,14 +124,13 @@ action:
                     target:
                       entity_id: !input target_entity
                     data:
-                      value: "{{ current_val + (step_v * press_count) }}"
+                      value: "{{ [ (current_val + (step_v * press_count)) | int, 100 ] | min }}"
 
-      # --- LINKS DREHEN (Verringern) ---
+      # --- LINKS DREHEN ---
       - conditions:
           - condition: template
             value_template: "{{ trigger.id == 'left' }}"
           - condition: template
-            # Nur dimmen, wenn an (bei Numeric immer wahr)
             value_template: "{{ not is_light or is_on }}"
         sequence:
           - choose:
@@ -143,7 +140,6 @@ action:
                     target:
                       entity_id: !input target_entity
                     data:
-                      # KORREKTUR: Wir berechnen den Wert und erzwingen min_v ODER 1%
                       brightness_pct: >
                         {% set calc = (current_val - (step_v * press_count)) | int %}
                         {% set minimum = min_v | int %}
@@ -154,7 +150,9 @@ action:
                     target:
                       entity_id: !input target_entity
                     data:
-                      value: "{{ current_val - (step_v * press_count) }}"
+                      value: >
+                        {% set calc = (current_val - (step_v * press_count)) | int %}
+                        {{ [calc, 0] | max }}
 
       # --- CENTER BUTTON ---
       - conditions: "{{ trigger.id == 'center' and (event_type == 'short_release' or event_type == 'multi_press_1') }}"
