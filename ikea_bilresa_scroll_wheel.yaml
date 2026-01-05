@@ -94,19 +94,14 @@ action:
       lock_active: !input lock_when_off
       min_val: !input min_value
       step: !input step_size
-      
-      # Automatische Erkennung
       domain: "{{ target.split('.')[0] }}"
       is_light: "{{ domain == 'light' }}"
-      
-      # Wert-Berechnung
       current_val: >
         {% if is_light %}
           {{ (state_attr(target, 'brightness') | int(0) / 255 * 100) | round(0) }}
         {% else %}
           {{ states(target) | float(0) }}
         {% endif %}
-      
       is_on: "{{ states(target) == 'on' }}"
       event_type: "{{ state_attr(trigger.entity_id, 'event_type') }}"
       press_count: "{{ trigger.to_state.attributes.totalNumberOfPressesCounted | int(1) }}"
@@ -117,7 +112,6 @@ action:
           - condition: template
             value_template: "{{ trigger.id == 'right' }}"
           - condition: template
-            # Lock nur bei Lampen
             value_template: "{{ not is_light or (is_on or not lock_active) }}"
         sequence:
           - choose:
@@ -127,7 +121,8 @@ action:
                     target:
                       entity_id: !input target_entity
                     data:
-                      brightness_step_pct: "{{ step * press_count }}"
+                      # Auch hier auf max 100% begrenzt für saubere Logik
+                      brightness_pct: "{{ [current_val + (step * press_count), 100] | min }}"
               - conditions: "{{ not is_light }}"
                 sequence:
                   - service: "{{ domain }}.set_value"
@@ -141,7 +136,6 @@ action:
           - condition: template
             value_template: "{{ trigger.id == 'left' }}"
           - condition: template
-            # Schutz nur bei Lampen
             value_template: "{{ not is_light or (is_on and current_val > min_val) }}"
         sequence:
           - choose:
@@ -151,7 +145,7 @@ action:
                     target:
                       entity_id: !input target_entity
                     data:
-                      brightness_step_pct: "{{ -step * press_count }}"
+                      brightness_pct: "{{ [current_val - (step * press_count), min_val] | max }}"
               - conditions: "{{ not is_light }}"
                 sequence:
                   - service: "{{ domain }}.set_value"
@@ -169,6 +163,5 @@ action:
         sequence: !input action_triple
       - conditions: "{{ trigger.id == 'center' and event_type == 'long_press' }}"
         sequence: !input action_hold
-
 mode: queued
 max: 20
