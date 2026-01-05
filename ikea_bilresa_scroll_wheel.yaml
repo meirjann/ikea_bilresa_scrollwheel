@@ -1,5 +1,4 @@
 blueprint:
-  blueprint:
   name: "IKEA Bilresa Scroll Wheel – One Layer (Matter/Universal)"
   description: >
     An advanced, Matter-optimized controller for the IKEA Bilresa Scroll Wheel. 
