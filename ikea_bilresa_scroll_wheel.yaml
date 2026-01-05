@@ -1,19 +1,9 @@
 blueprint:
-  name: "IKEA Bilresa Scroll Wheel – Universal Rework"
-  description: "Control lights (with safety lock) or numeric entities (unrestricted) via Matter."
+  name: "IKEA Bilresa Scroll Wheel – Universal Smart"
+  description: "Matter-based control. Automatically detects if target is a light (with safety lock) or a numeric entity."
   domain: automation
   input:
-    control_mode:
-      name: "Control Mode"
-      default: "light"
-      selector:
-        select:
-          options:
-            - label: "Light (Brightness %)"
-              value: "light"
-            - label: "Generic Numeric (number / input_number)"
-              value: "numeric"
-
+    # --- Entities ---
     scroll_right_event:
       name: "Scroll Wheel Event – Right"
       selector:
@@ -32,6 +22,7 @@ blueprint:
     
     target_entity:
       name: "Target Entity"
+      description: "Select a Light, Number or Input Number."
       selector:
         entity:
           filter: 
@@ -40,9 +31,10 @@ blueprint:
               - number
               - input_number
 
+    # --- Settings ---
     lock_when_off:
       name: "Lock when off (Lights only)"
-      description: "Prevents turning on the light by rotating if it is currently off."
+      description: "Prevents rotation from turning on the light if it's currently off."
       default: true
       selector:
         boolean: {}
@@ -63,6 +55,7 @@ blueprint:
           min: 1
           max: 20
 
+    # --- Actions ---
     action_single:
       name: "Single Press"
       default: []
@@ -97,14 +90,16 @@ trigger:
 
 action:
   - variables:
-      mode: !input control_mode
       target: !input target_entity
       lock_active: !input lock_when_off
       min_val: !input min_value
       step: !input step_size
       
-      is_light: "{{ mode == 'light' }}"
-      # Aktueller Wert: Entweder Helligkeit in % oder der rohe State
+      # Automatische Erkennung
+      domain: "{{ target.split('.')[0] }}"
+      is_light: "{{ domain == 'light' }}"
+      
+      # Wert-Berechnung
       current_val: >
         {% if is_light %}
           {{ (state_attr(target, 'brightness') | int(0) / 255 * 100) | round(0) }}
@@ -117,14 +112,13 @@ action:
       press_count: "{{ trigger.to_state.attributes.totalNumberOfPressesCounted | int(1) }}"
 
   - choose:
-      # --- RECHTS DREHEN (Erhöhen) ---
+      # --- RECHTS DREHEN ---
       - conditions:
           - condition: template
             value_template: "{{ trigger.id == 'right' }}"
           - condition: template
-            # Logik: Wenn Licht -> Prüfe Lock. Wenn Nummer -> Immer erlauben.
-            value_template: >
-              {{ not is_light or (is_on or not lock_active) }}
+            # Lock nur bei Lampen
+            value_template: "{{ not is_light or (is_on or not lock_active) }}"
         sequence:
           - choose:
               - conditions: "{{ is_light }}"
@@ -136,22 +130,19 @@ action:
                       brightness_step_pct: "{{ step * press_count }}"
               - conditions: "{{ not is_light }}"
                 sequence:
-                  - service: >
-                      {% if target.split('.')[0] == 'input_number' %} input_number.set_value 
-                      {% else %} number.set_value {% endif %}
+                  - service: "{{ domain }}.set_value"
                     target:
                       entity_id: !input target_entity
                     data:
                       value: "{{ current_val + (step * press_count) }}"
 
-      # --- LINKS DREHEN (Verringern) ---
+      # --- LINKS DREHEN ---
       - conditions:
           - condition: template
             value_template: "{{ trigger.id == 'left' }}"
           - condition: template
-            # Logik: Wenn Licht -> Muss an sein UND über Min-Wert. Wenn Nummer -> Immer erlauben.
-            value_template: >
-              {{ not is_light or (is_on and current_val > min_val) }}
+            # Schutz nur bei Lampen
+            value_template: "{{ not is_light or (is_on and current_val > min_val) }}"
         sequence:
           - choose:
               - conditions: "{{ is_light }}"
@@ -163,24 +154,19 @@ action:
                       brightness_step_pct: "{{ -step * press_count }}"
               - conditions: "{{ not is_light }}"
                 sequence:
-                  - service: >
-                      {% if target.split('.')[0] == 'input_number' %} input_number.set_value 
-                      {% else %} number.set_value {% endif %}
+                  - service: "{{ domain }}.set_value"
                     target:
                       entity_id: !input target_entity
                     data:
                       value: "{{ current_val - (step * press_count) }}"
 
-      # --- CENTER BUTTON (Multi-Press / Hold) ---
+      # --- CENTER BUTTON ---
       - conditions: "{{ trigger.id == 'center' and (event_type == 'short_release' or event_type == 'multi_press_1') }}"
         sequence: !input action_single
-
       - conditions: "{{ trigger.id == 'center' and (event_type == 'multi_press_2' or press_count == 2) }}"
         sequence: !input action_double
-
       - conditions: "{{ trigger.id == 'center' and (event_type == 'multi_press_3' or press_count == 3) }}"
         sequence: !input action_triple
-
       - conditions: "{{ trigger.id == 'center' and event_type == 'long_press' }}"
         sequence: !input action_hold
 
