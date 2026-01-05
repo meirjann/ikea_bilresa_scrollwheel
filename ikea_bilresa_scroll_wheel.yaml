@@ -37,7 +37,11 @@ blueprint:
       name: "Target Entity"
       description: "The Light OR the numeric entity to control."
       selector:
-        entity: {}
+        entity:
+          domain:
+            - light
+            - number
+            - input_number
 
     # --- Settings ---
     lock_when_off:
