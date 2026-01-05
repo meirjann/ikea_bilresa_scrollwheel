@@ -1,12 +1,10 @@
 blueprint:
-  name: "IKEA Bilresa Scroll Wheel – Universal"
-  description: "Control lights or any numeric value (number/input_number) with a power-on lock and multi-press button."
+  name: "IKEA Bilresa Scroll Wheel – Universal Rework"
+  description: "Control lights (with safety lock) or numeric entities (unrestricted) via Matter."
   domain: automation
   input:
-    # --- Mode Switch ---
     control_mode:
       name: "Control Mode"
-      description: "Choose if you want to control a light or a generic numeric entity."
       default: "light"
       selector:
         select:
@@ -16,7 +14,6 @@ blueprint:
             - label: "Generic Numeric (number / input_number)"
               value: "numeric"
 
-    # --- Entities ---
     scroll_right_event:
       name: "Scroll Wheel Event – Right"
       selector:
@@ -35,24 +32,23 @@ blueprint:
     
     target_entity:
       name: "Target Entity"
-      description: "The Light OR the numeric entity to control."
       selector:
         entity:
           filter: 
             domain:
               - light
               - number
-            
-    # --- Settings ---
+              - input_number
+
     lock_when_off:
-      name: "Lock when off / at minimum"
-      description: "Light: Prevents turning on if off. Numeric: Prevents increasing if at 0/min."
+      name: "Lock when off (Lights only)"
+      description: "Prevents turning on the light by rotating if it is currently off."
       default: true
       selector:
         boolean: {}
     min_value:
-      name: "Minimum Value (%)"
-      description: "The entity will not go below this value when scrolling down."
+      name: "Minimum Brightness (Lights only)"
+      description: "Light will not go below this % when scrolling down."
       default: 10
       selector:
         number:
@@ -61,14 +57,12 @@ blueprint:
           unit_of_measurement: "%"
     step_size:
       name: "Step Size"
-      description: "Value change per tick (multiplied by rotation speed)."
       default: 5
       selector:
         number:
           min: 1
           max: 20
 
-    # --- Actions ---
     action_single:
       name: "Single Press"
       default: []
@@ -109,8 +103,8 @@ action:
       min_val: !input min_value
       step: !input step_size
       
-      # Status calculations
       is_light: "{{ mode == 'light' }}"
+      # Aktueller Wert: Entweder Helligkeit in % oder der rohe State
       current_val: >
         {% if is_light %}
           {{ (state_attr(target, 'brightness') | int(0) / 255 * 100) | round(0) }}
@@ -118,23 +112,19 @@ action:
           {{ states(target) | float(0) }}
         {% endif %}
       
-      is_active: >
-        {% if is_light %}
-          {{ states(target) == 'on' }}
-        {% else %}
-          {{ states(target) | float(0) > 0 }}
-        {% endif %}
-
+      is_on: "{{ states(target) == 'on' }}"
       event_type: "{{ state_attr(trigger.entity_id, 'event_type') }}"
       press_count: "{{ trigger.to_state.attributes.totalNumberOfPressesCounted | int(1) }}"
 
   - choose:
-      # --- SCROLL RIGHT (UP) ---
+      # --- RECHTS DREHEN (Erhöhen) ---
       - conditions:
           - condition: template
             value_template: "{{ trigger.id == 'right' }}"
           - condition: template
-            value_template: "{{ is_active or not lock_active }}"
+            # Logik: Wenn Licht -> Prüfe Lock. Wenn Nummer -> Immer erlauben.
+            value_template: >
+              {{ not is_light or (is_on or not lock_active) }}
         sequence:
           - choose:
               - conditions: "{{ is_light }}"
@@ -152,14 +142,16 @@ action:
                     target:
                       entity_id: !input target_entity
                     data:
-                      value: "{{ [current_val + (step * press_count), 100] | min }}"
+                      value: "{{ current_val + (step * press_count) }}"
 
-      # --- SCROLL LEFT (DOWN) ---
+      # --- LINKS DREHEN (Verringern) ---
       - conditions:
           - condition: template
-            value_template: "{{ trigger.id == 'left' and is_active }}"
+            value_template: "{{ trigger.id == 'left' }}"
           - condition: template
-            value_template: "{{ current_val > min_val }}"
+            # Logik: Wenn Licht -> Muss an sein UND über Min-Wert. Wenn Nummer -> Immer erlauben.
+            value_template: >
+              {{ not is_light or (is_on and current_val > min_val) }}
         sequence:
           - choose:
               - conditions: "{{ is_light }}"
@@ -177,27 +169,19 @@ action:
                     target:
                       entity_id: !input target_entity
                     data:
-                      value: "{{ [current_val - (step * press_count), min_val] | max }}"
+                      value: "{{ current_val - (step * press_count) }}"
 
-      # --- CENTER BUTTON ---
-      - conditions:
-          - condition: template
-            value_template: "{{ trigger.id == 'center' and (event_type == 'short_release' or event_type == 'multi_press_1') }}"
+      # --- CENTER BUTTON (Multi-Press / Hold) ---
+      - conditions: "{{ trigger.id == 'center' and (event_type == 'short_release' or event_type == 'multi_press_1') }}"
         sequence: !input action_single
 
-      - conditions:
-          - condition: template
-            value_template: "{{ trigger.id == 'center' and (event_type == 'multi_press_2' or press_count == 2) }}"
+      - conditions: "{{ trigger.id == 'center' and (event_type == 'multi_press_2' or press_count == 2) }}"
         sequence: !input action_double
 
-      - conditions:
-          - condition: template
-            value_template: "{{ trigger.id == 'center' and (event_type == 'multi_press_3' or press_count == 3) }}"
+      - conditions: "{{ trigger.id == 'center' and (event_type == 'multi_press_3' or press_count == 3) }}"
         sequence: !input action_triple
 
-      - conditions:
-          - condition: template
-            value_template: "{{ trigger.id == 'center' and event_type == 'long_press' }}"
+      - conditions: "{{ trigger.id == 'center' and event_type == 'long_press' }}"
         sequence: !input action_hold
 
 mode: queued
