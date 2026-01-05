@@ -40,7 +40,6 @@ blueprint:
         entity:
           domain:
             - light
-            - number
             
     # --- Settings ---
     lock_when_off:
