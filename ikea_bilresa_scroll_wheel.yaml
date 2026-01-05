@@ -21,7 +21,7 @@ blueprint:
           domain: event
     
     target_entity:
-      name: "Target Entity"
+      name: "Target Scroll Entity"
       description: "Select a Light, Number or Input Number."
       selector:
         entity:
