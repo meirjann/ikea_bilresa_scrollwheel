@@ -1,17 +1,16 @@
 blueprint:
-  name: "IKEA Bilresa Scroll Wheel – Universal Smart Fix"
-  description: "Matter-based control. Automatically detects if target is a light (with safety lock) or a numeric entity."
+  name: "IKEA Bilresa Scroll Wheel – Universal Smart FINAL"
+  description: "Matter-based control. Automatic entity detection with robust clamping logic."
   domain: automation
   input:
-    # --- Entities ---
     scroll_right_event:
-      name: "Scroll Wheel Event – Right" 
+      name: "Scroll Wheel Event – Right"
       selector:
         entity:
           domain: event
     scroll_left_event:
       name: "Scroll Wheel Event – Left"
-    selector:
+      selector:
         entity:
           domain: event
     center_button_event:
@@ -19,28 +18,22 @@ blueprint:
       selector:
         entity:
           domain: event
-    
     target_entity:
       name: "Target Scroll Entity"
-      description: "Select a Light, Number or Input Number."
       selector:
         entity:
-          filter: 
+          filter:
             domain:
               - light
               - number
               - input_number
-
-    # --- Settings ---
     lock_when_off:
       name: "Lock when off (Lights only)"
-      description: "Prevents rotation from turning on the light if it's currently off."
       default: true
       selector:
         boolean: {}
     min_value:
       name: "Minimum Brightness (Lights only)"
-      description: "Light will not go below this % when scrolling down."
       default: 10
       selector:
         number:
@@ -54,8 +47,6 @@ blueprint:
         number:
           min: 1
           max: 20
-
-    # --- Actions ---
     action_single:
       name: "Single Press"
       default: []
@@ -90,24 +81,27 @@ trigger:
 
 action:
   - variables:
-      target: !input target_entity
-      lock_active: !input lock_when_off
-      min_val: !input min_value
-      step: !input step_size
+      # Inputs direkt zuweisen
+      target_ent: !input target_entity
+      lock_act: !input lock_when_off
+      min_v: !input min_value
+      step_v: !input step_size
       
-      domain: "{{ target.split('.')[0] }}"
+      # Domain erkennen
+      domain: "{{ target_ent.split('.')[0] }}"
       is_light: "{{ domain == 'light' }}"
       
+      # Aktuellen Wert sicher berechnen (Fallback auf 0)
       current_val: >
         {% if is_light %}
-          {{ (state_attr(target, 'brightness') | int(0) / 255 * 100) | round(0) | int }}
+          {{ (state_attr(target_ent, 'brightness') | int(0) / 255 * 100) | int }}
         {% else %}
-          {{ states(target) | float(0) | int }}
+          {{ states(target_ent) | float(0) | int }}
         {% endif %}
       
-      is_on: "{{ states(target) == 'on' }}"
-      event_type: "{{ state_attr(trigger.entity_id, 'event_type') }}"
+      is_on: "{{ states(target_ent) == 'on' }}"
       press_count: "{{ trigger.to_state.attributes.totalNumberOfPressesCounted | int(1) }}"
+      event_type: "{{ state_attr(trigger.entity_id, 'event_type') }}"
 
   - choose:
       # --- RECHTS DREHEN (Erhöhen) ---
@@ -115,7 +109,8 @@ action:
           - condition: template
             value_template: "{{ trigger.id == 'right' }}"
           - condition: template
-            value_template: "{{ not is_light or (is_on or not lock_active) }}"
+            # Bei Licht: Lock prüfen. Sonst immer wahr.
+            value_template: "{{ not is_light or (is_on or not lock_act) }}"
         sequence:
           - choose:
               - conditions: "{{ is_light }}"
@@ -124,45 +119,42 @@ action:
                     target:
                       entity_id: !input target_entity
                     data:
-                      brightness_pct: "{{ [ (current_val + (step * press_count)) | int, 100 ] | min }}"
+                      brightness_pct: "{{ [ (current_val + (step_v * press_count)) | int, 100 ] | min }}"
               - conditions: "{{ not is_light }}"
                 sequence:
                   - service: "{{ domain }}.set_value"
                     target:
                       entity_id: !input target_entity
                     data:
-                      value: "{{ current_val + (step * press_count) }}"
+                      value: "{{ current_val + (step_v * press_count) }}"
 
       # --- LINKS DREHEN (Verringern) ---
       - conditions:
           - condition: template
             value_template: "{{ trigger.id == 'left' }}"
           - condition: template
-            # Nur ausführen, wenn Lampe an ist (oder es kein Licht ist)
+            # Nur dimmen, wenn an (bei Numeric immer wahr)
             value_template: "{{ not is_light or is_on }}"
         sequence:
           - choose:
               - conditions: "{{ is_light }}"
                 sequence:
-                  # Verhindert Befehle, wenn wir schon am Limit sind
-                  - condition: template
-                    value_template: "{{ current_val > min_val }}"
                   - service: light.turn_on
                     target:
                       entity_id: !input target_entity
                     data:
-                      # Wir nehmen den berechneten Wert, aber er darf NIEMALS kleiner als min_val sein.
-                      # Mindestens 1%, damit die Lampe nicht ausgeht.
+                      # KORREKTUR: Wir berechnen den Wert und erzwingen min_v ODER 1%
                       brightness_pct: >
-                        {% set next_val = (current_val - (step * press_count)) | int %}
-                        {{ [next_val, min_val | int, 1] | max }}
+                        {% set calc = (current_val - (step_v * press_count)) | int %}
+                        {% set minimum = min_v | int %}
+                        {{ [calc, minimum, 1] | max }}
               - conditions: "{{ not is_light }}"
                 sequence:
                   - service: "{{ domain }}.set_value"
                     target:
                       entity_id: !input target_entity
                     data:
-                      value: "{{ current_val - (step * press_count) }}"
+                      value: "{{ current_val - (step_v * press_count) }}"
 
       # --- CENTER BUTTON ---
       - conditions: "{{ trigger.id == 'center' and (event_type == 'short_release' or event_type == 'multi_press_1') }}"
