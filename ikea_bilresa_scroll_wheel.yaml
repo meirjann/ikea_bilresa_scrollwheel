@@ -4,7 +4,7 @@ blueprint:
   domain: automation
   input:
     scroll_right_event:
-      name: "Scroll Wheel Event – Right"
+      name: "Scroll Wheel Event – Right Test"
       selector:
         entity:
           domain: event
