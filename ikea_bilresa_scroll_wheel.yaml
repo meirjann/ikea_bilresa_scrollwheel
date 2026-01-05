@@ -2,7 +2,6 @@ blueprint:
   name: "IKEA Bilresa Scroll Wheel – One Layer (Matter/Universal)"
   description: >
     Advanced Matter-optimized controller for the IKEA Bilresa Scroll Wheel.
-    - - -
     Note: This blueprint handles ONE layer. If you want to use all 3 remote layers, create separate automations for each layer using their respective event entities.
   domain: automation
   input:
