@@ -1,35 +1,37 @@
 blueprint:
   name: "IKEA Bilresa Scroll Wheel – One Layer (Matter/Universal)"
   description: >
-    An advanced, Matter-optimized controller for the IKEA Bilresa Scroll Wheel. 
-    
-    Features:
-    - Smart Detection: Automatically handles Lights, Numbers, and Input Numbers.
-    - Precision Fix: Uses specialized rounding to ensure exact 5% increments (no more 4% or 6% jumps).
-    - Safety Lock: Optional protection for lights to prevent accidental activation.
-    - Multi-Press: Center button supports single, double, triple, and long press.
-    
-    Note: This handles ONE layer. Import and create separate automations for each of the 3 remote layers.
+    Advanced Matter-optimized controller for the IKEA Bilresa Scroll Wheel.
+    - - -
+    Note: This blueprint handles ONE layer. If you want to use all 3 remote layers, create separate automations for each layer using their respective event entities.
   domain: automation
   input:
-    # (Inputs bleiben identisch wie in deiner Vorlage)
-    scroll_right_event:
-      name: "Scroll Wheel Event – Right"
+    # --- Entities ---
+    scroll_left_event:
+      name: "Scroll Wheel Event – Left"
+      description: "Usually Button 1, 4, or 7 (Layer 1, 2, or 3)."
+      required: false
       selector:
         entity:
           domain: event
-    scroll_left_event:
-      name: "Scroll Wheel Event – Left"
+    scroll_right_event:
+      name: "Scroll Wheel Event – Right"
+      description: "Usually Button 2, 5, or 8 (Layer 1, 2, or 3)."
+      required: false
       selector:
         entity:
           domain: event
     center_button_event:
       name: "Center Button Event"
+      description: "Usually Button 3, 6, or 9 (Layer 1, 2, or 3)."
+      required: false
       selector:
         entity:
           domain: event
+
     target_entity:
-      name: "Target Scroll Entity"
+      name: "Target Entity"
+      description: "The Light, Number, or Input Number to control."
       selector:
         entity:
           filter:
@@ -37,13 +39,17 @@ blueprint:
               - light
               - number
               - input_number
+
+    # --- Settings ---
     lock_when_off:
       name: "Lock when off (Lights only)"
+      description: "Prevents rotation from turning on the light if it is currently off."
       default: true
       selector:
         boolean: {}
     min_value:
       name: "Minimum Brightness (Lights only)"
+      description: "The light will not go below this % when scrolling down."
       default: 10
       selector:
         number:
@@ -52,11 +58,14 @@ blueprint:
           unit_of_measurement: "%"
     step_size:
       name: "Step Size"
+      description: "Percentage change per scroll tick."
       default: 5
       selector:
         number:
           min: 1
           max: 20
+
+    # --- Actions for Center Button ---
     action_single:
       name: "Single Press"
       default: []
@@ -99,7 +108,7 @@ action:
       domain: "{{ target_ent.split('.')[0] }}"
       is_light: "{{ domain == 'light' }}"
       
-      # FIX: round(0) statt nur int, um 19.9% zu 20% zu machen statt zu 19%
+      # Calculate current value with precision rounding
       current_val: >
         {% if is_light %}
           {{ (state_attr(target_ent, 'brightness') | int(0) / 2.55) | round(0) | int }}
@@ -108,11 +117,12 @@ action:
         {% endif %}
       
       is_on: "{{ states(target_ent) == 'on' }}"
-      press_count: "{{ trigger.to_state.attributes.totalNumberOfPressesCounted | int(1) }}"
-      event_type: "{{ state_attr(trigger.entity_id, 'event_type') }}"
+      # Context-safe trigger attributes
+      press_count: "{{ trigger.to_state.attributes.totalNumberOfPressesCounted | int(1) if trigger is defined and trigger.to_state is defined else 1 }}"
+      event_type: "{{ state_attr(trigger.entity_id, 'event_type') if trigger is defined else 'none' }}"
 
   - choose:
-      # --- RECHTS DREHEN ---
+      # --- SCROLL RIGHT ---
       - conditions:
           - condition: template
             value_template: "{{ trigger.id == 'right' }}"
@@ -135,7 +145,7 @@ action:
                     data:
                       value: "{{ [ (current_val + (step_v * press_count)) | int, 100 ] | min }}"
 
-      # --- LINKS DREHEN ---
+      # --- SCROLL LEFT ---
       - conditions:
           - condition: template
             value_template: "{{ trigger.id == 'left' }}"
