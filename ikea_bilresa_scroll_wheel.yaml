@@ -9,21 +9,18 @@ blueprint:
     scroll_left_event:
       name: "Scroll Wheel Event – Left"
       description: "Usually Button 1, 4, or 7 (Layer 1, 2, or 3)."
-      required: false
       selector:
         entity:
           domain: event
     scroll_right_event:
       name: "Scroll Wheel Event – Right"
       description: "Usually Button 2, 5, or 8 (Layer 1, 2, or 3)."
-      required: false
       selector:
         entity:
           domain: event
     center_button_event:
       name: "Center Button Event"
       description: "Usually Button 3, 6, or 9 (Layer 1, 2, or 3)."
-      required: false
       selector:
         entity:
           domain: event
