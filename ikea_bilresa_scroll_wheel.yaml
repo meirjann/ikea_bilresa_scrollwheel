@@ -7,7 +7,7 @@ blueprint:
   input:
     # --- Entities ---
     scroll_left_event:
-      name: "Scroll Wheel Event – Left"
+      name: "Scroll Wheel Event – Lef ewt"
       description: "Usually Button 1, 4, or 7 (Layer 1, 2, or 3)."
       selector:
         entity:
