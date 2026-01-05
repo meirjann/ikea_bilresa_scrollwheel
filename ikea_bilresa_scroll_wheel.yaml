@@ -7,13 +7,13 @@ blueprint:
   input:
     # --- Entities ---
     scroll_right_event:
-      name: "Scroll Wheel Event – Right"
+      name: "Scroll Wheel Event – Clockwise"
       description: "Increase Value. Usually Button 1, 4, or 7 (Layer 1, 2, or 3)."
       selector:
         entity:
           domain: event
     scroll_left_event:
-      name: "Scroll Wheel Event – Left"
+      name: "Scroll Wheel Event – Counterclockwise"
       description: "Decrease Value. Usually Button 2, 5, or 8 (Layer 1, 2, or 3)."
       selector:
         entity:
