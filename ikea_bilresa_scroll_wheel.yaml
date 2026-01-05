@@ -28,7 +28,7 @@ blueprint:
     target_entity:
       name: "Target Entity"
       description: "The Light, Number, or Input Number to control."
-      default: ""
+      default: 0
       selector:
         entity:
           filter:
