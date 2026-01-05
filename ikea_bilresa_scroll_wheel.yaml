@@ -38,8 +38,7 @@ blueprint:
       description: "The Light OR the numeric entity to control."
       selector:
         entity:
-          domain:
-            - light
+          domain: light
             
     # --- Settings ---
     lock_when_off:
