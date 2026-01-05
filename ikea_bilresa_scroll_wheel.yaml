@@ -1,6 +1,16 @@
 blueprint:
-  name: "IKEA Bilresa Scroll Wheel – Universal Smart FINAL (Precision Fix)"
-  description: "Matter-based control. Fixed rounding issues for precise 5% steps."
+  blueprint:
+  name: "IKEA Bilresa Scroll Wheel – One Layer (Matter/Universal)"
+  description: >
+    An advanced, Matter-optimized controller for the IKEA Bilresa Scroll Wheel. 
+    
+    Features:
+    - Smart Detection: Automatically handles Lights, Numbers, and Input Numbers.
+    - Precision Fix: Uses specialized rounding to ensure exact 5% increments (no more 4% or 6% jumps).
+    - Safety Lock: Optional protection for lights to prevent accidental activation.
+    - Multi-Press: Center button supports single, double, triple, and long press.
+    
+    Note: This handles ONE layer. Import and create separate automations for each of the 3 remote layers.
   domain: automation
   input:
     # (Inputs bleiben identisch wie in deiner Vorlage)
