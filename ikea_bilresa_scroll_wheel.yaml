@@ -1,5 +1,5 @@
 blueprint:
-  name: "IKEA Bilresa Scroll Wheel – Universal Smart"
+  name: "IKEA Bilresa Scroll Wheel – Universal Smart Fix"
   description: "Matter-based control. Automatically detects if target is a light (with safety lock) or a numeric entity."
   domain: automation
   input:
@@ -11,7 +11,7 @@ blueprint:
           domain: event
     scroll_left_event:
       name: "Scroll Wheel Event – Left"
-      selector:
+    selector:
         entity:
           domain: event
     center_button_event:
@@ -92,20 +92,21 @@ action:
   - variables:
       target: !input target_entity
       lock_active: !input lock_when_off
-      min_val: "!input min_value"
+      min_val: !input min_value
       step: !input step_size
+      
       domain: "{{ target.split('.')[0] }}"
       is_light: "{{ domain == 'light' }}"
-      # Wir holen den Wert so frisch wie möglich
+      
       current_val: >
         {% if is_light %}
           {{ (state_attr(target, 'brightness') | int(0) / 255 * 100) | round(0) | int }}
         {% else %}
           {{ states(target) | float(0) | int }}
         {% endif %}
+      
       is_on: "{{ states(target) == 'on' }}"
       event_type: "{{ state_attr(trigger.entity_id, 'event_type') }}"
-      # Matter sendet oft hohe press_counts bei schnellem Drehen
       press_count: "{{ trigger.to_state.attributes.totalNumberOfPressesCounted | int(1) }}"
 
   - choose:
@@ -123,7 +124,6 @@ action:
                     target:
                       entity_id: !input target_entity
                     data:
-                      # Begrenzung auf maximal 100%
                       brightness_pct: "{{ [ (current_val + (step * press_count)) | int, 100 ] | min }}"
               - conditions: "{{ not is_light }}"
                 sequence:
@@ -138,25 +138,24 @@ action:
           - condition: template
             value_template: "{{ trigger.id == 'left' }}"
           - condition: template
-            # Nur ausführen, wenn Lampe an ist (bei Numeric immer wahr)
+            # Nur ausführen, wenn Lampe an ist (oder es kein Licht ist)
             value_template: "{{ not is_light or is_on }}"
         sequence:
           - choose:
               - conditions: "{{ is_light }}"
                 sequence:
+                  # Verhindert Befehle, wenn wir schon am Limit sind
                   - condition: template
-                    # STOPP-BEDINGUNG: Nur dimmen, wenn wir bereits über dem Minimum sind
                     value_template: "{{ current_val > min_val }}"
                   - service: light.turn_on
                     target:
                       entity_id: !input target_entity
                     data:
-                      # DIE KORREKTUR: 
                       # Wir nehmen den berechneten Wert, aber er darf NIEMALS kleiner als min_val sein.
-                      # Und er darf NIEMALS 0 sein (da 0 = Aus). Wir erzwingen mindestens 1, falls min_val 0 wäre.
+                      # Mindestens 1%, damit die Lampe nicht ausgeht.
                       brightness_pct: >
-                        {% set new_val = (current_val - (step * press_count)) | int %}
-                        {{ [new_val, min_val | int, 1] | max }}
+                        {% set next_val = (current_val - (step * press_count)) | int %}
+                        {{ [next_val, min_val | int, 1] | max }}
               - conditions: "{{ not is_light }}"
                 sequence:
                   - service: "{{ domain }}.set_value"
