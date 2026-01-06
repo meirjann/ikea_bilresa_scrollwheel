@@ -1,33 +1,33 @@
 blueprint:
-  name: "IKEA Bilresa Scroll Wheel – One Layer (Matter/Universal)"
+  name: "IKEA Bilresa Scroll Wheel – One Layer (Matter/Universal + Media)"
   description: >
     Advanced Matter-optimized controller for the IKEA Bilresa Scroll Wheel. 
-    Note: This blueprint handles ONE layer. If you want to use all 3 remote layers, create separate automations for each layer using their respective event entities.
+    Now supports Lights, Numbers, and Media Player Volume.
   domain: automation
   input:
     # --- Entities ---
     scroll_right_event:
       name: "Scroll Wheel Event – Clockwise"
-      description: "Increase Value. Usually Button 1, 4, or 7 (Layer 1, 2, or 3)."
+      description: "Increase Value. Usually Button 1, 4, or 7."
       selector:
         entity:
           domain: event
     scroll_left_event:
       name: "Scroll Wheel Event – Counterclockwise"
-      description: "Decrease Value. Usually Button 2, 5, or 8 (Layer 1, 2, or 3)."
+      description: "Decrease Value. Usually Button 2, 5, or 8."
       selector:
         entity:
           domain: event
     center_button_event:
       name: "Center Button Event"
-      description: "Usually Button 3, 6, or 9 (Layer 1, 2, or 3)."
+      description: "Usually Button 3, 6, or 9."
       selector:
         entity:
           domain: event
 
     target_entity:
       name: "Target Entity"
-      description: "The Light, Number, or Input Number to control."
+      description: "The Light, Number, Input Number, or Media Player to control."
       selector:
         entity:
           filter:
@@ -104,22 +104,25 @@ action:
       
       domain: "{{ target_ent.split('.')[0] }}"
       is_light: "{{ domain == 'light' }}"
+      is_media: "{{ domain == 'media_player' }}"
       
-      # Calculate current value with precision rounding
+      # Calculate current value (normalized to 0-100)
       current_val: >
         {% if is_light %}
           {{ (state_attr(target_ent, 'brightness') | int(0) / 2.55) | round(0) | int }}
+        {% elif is_media %}
+          {{ (state_attr(target_ent, 'volume_level') | float(0) * 100) | round(0) | int }}
         {% else %}
           {{ states(target_ent) | float(0) | round(0) | int }}
         {% endif %}
       
-      is_on: "{{ states(target_ent) == 'on' }}"
-      # Context-safe trigger attributes
+      is_on: "{{ states(target_ent) not in ['off', 'unavailable', 'unknown', 'standby'] }}"
+      
       press_count: "{{ trigger.to_state.attributes.totalNumberOfPressesCounted | int(1) if trigger is defined and trigger.to_state is defined else 1 }}"
       event_type: "{{ state_attr(trigger.entity_id, 'event_type') if trigger is defined else 'none' }}"
 
   - choose:
-      # --- SCROLL RIGHT ---
+      # --- SCROLL RIGHT (Increase) ---
       - conditions:
           - condition: template
             value_template: "{{ trigger.id == 'right' }}"
@@ -134,7 +137,14 @@ action:
                       entity_id: !input target_entity
                     data:
                       brightness_pct: "{{ [ (current_val + (step_v * press_count)) | int, 100 ] | min }}"
-              - conditions: "{{ not is_light }}"
+              - conditions: "{{ is_media }}"
+                sequence:
+                  - service: media_player.volume_set
+                    target:
+                      entity_id: !input target_entity
+                    data:
+                      volume_level: "{{ ([ (current_val + (step_v * press_count)) | int, 100 ] | min) / 100 }}"
+              - conditions: "{{ domain in ['number', 'input_number'] }}"
                 sequence:
                   - service: "{{ domain }}.set_value"
                     target:
@@ -142,7 +152,7 @@ action:
                     data:
                       value: "{{ [ (current_val + (step_v * press_count)) | int, 100 ] | min }}"
 
-      # --- SCROLL LEFT ---
+      # --- SCROLL LEFT (Decrease) ---
       - conditions:
           - condition: template
             value_template: "{{ trigger.id == 'left' }}"
@@ -160,7 +170,16 @@ action:
                         {% set calc = (current_val - (step_v * press_count)) | int %}
                         {% set minimum = min_v | int %}
                         {{ [calc, minimum, 0] | max }}
-              - conditions: "{{ not is_light }}"
+              - conditions: "{{ is_media }}"
+                sequence:
+                  - service: media_player.volume_set
+                    target:
+                      entity_id: !input target_entity
+                    data:
+                      volume_level: >
+                        {% set calc = (current_val - (step_v * press_count)) | int %}
+                        {{ ([calc, 0] | max) / 100 }}
+              - conditions: "{{ domain in ['number', 'input_number'] }}"
                 sequence:
                   - service: "{{ domain }}.set_value"
                     target:
