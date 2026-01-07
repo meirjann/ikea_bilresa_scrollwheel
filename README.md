@@ -1,47 +1,41 @@
 # IKEA Bilresa Scroll Wheel – One Layer (Matter/Universal)
 
-This Home Assistant blueprint is a precision-engineered rework for the **IKEA Bilresa Scroll Wheel** (Matter version). It solves common issues like inconsistent dimming steps and provides a "smart" interface for controlling various entity types automatically.
+Inspired by [fangathome/ikea_bilresa_scrollwheel](https://github.com/fangathome/ikea_bilresa_scrollwheel), I’ve created a simple blueprint to control the new **IKEA Bilresa Scroll Wheel** over Matter.
 
-<a href="https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2Fmeirjann%2Fikea_bilresa_scrollwheel%2Fblob%2Fmain%2Fikea_bilresa_scroll_wheel.yaml" target="_blank">![Open your Home Assistant instance and show the blueprint import dialog with a specific blueprint pre-filled.](https://my.home-assistant.io/badges/blueprint_import.svg)</a>
+> [!CAUTION]
+> Currently, the Home Assistant Core can’t process multipresses from Matter live. It waits until the press or scroll is finished. This can be annoying when controlling lights. I’ll update this blueprint once this PR is live:
+> https://github.com/home-assistant/core/pull/159045
 
 
+## Features
 
-## ✨ Features
+- Control lights, a media player and number entities.
+- Customise the step size from one scroll „click“ to 20.
+- Enable scroll lock for lights to prevent them from being turned off.
+- Set a minimum brightness for your lights.
+- Create custom actions for the centre button including single, double and triple presses and holds.
 
-* **Smart Entity Detection:** Automatically detects if you are controlling a `light`, `number`, or `input_number` helper and adjusts services and safety logic accordingly.
-* **Precision Step Fix (Exact 5% steps):** Thanks to an optimized rounding logic (`| round(0)`), uneven jumps (like 4% or 6%) are eliminated. Scrolling follows exact increments based on your chosen step size.
-* **Scroll Lock (Lights only):** Prevents accidentally turning the light on by rotating the wheel when it is currently off.
-* **Minimum Brightness (Lights only):** Defines a lower limit to ensure the light never accidentally turns off or becomes too dim while scrolling down.
-* **Advanced Center Button:** Supports Single Press, Double Press, Triple Press, and Long Press (Hold) for custom actions.
-* **Matter Optimized:** Specifically designed for `event` entities provided by Matter-integrated IKEA devices.
+![Blueprint example image in home assistant](https://github.com/meirjann/ikea_bilresa_scrollwheel/blob/main/screenshots/blueprint.png)
 
-## 🛠 Installation & Usage
+## Installation / Usage
 
-### 1. Multi-Layer Note
-The IKEA Bilresa remote supports up to 3 "layers" (indicated by the small LEDs). This blueprint controls **one layer at a time**.
+### 1. Multi-Layer Switch
+
+The Bilresa Scroll Wheel has three „layers“ indicated by small LEDs. However, this blueprint only controls one layer.
+
 > [!IMPORTANT]
-> To use all 3 layers of your remote, you need to **create this automation 3 times**, selecting the specific event entities for each respective layer.
+> To use all three layers, create this automation three times, selecting the appropriate event entities for each layer.
 
-### 2. Configuration
-1. **Scroll Events:** Map the `Right` and `Left` event entities of your Bilresa.
-2. **Center Button:** Map the `Center` event entity.
-3. **Target Entity:** Select any Light, Number, or Input Number.
-4. **Settings:** Define your Step Size and (for lights) the Minimum Brightness and Power-on Lock.
+Home Assistant interprets the scroll wheel as nine buttons:
 
-## 📂 Folder Structure (for Multi-Language Support)
-To enable translations (e.g., German UI), ensure your files are placed in a folder structure like this:
-```text
-/config/blueprints/automation/your_folder/
-├── ikea_bilresa_one_layer.yaml
-└── translations/
-    ├── en.json
-    └── de.json
+```bash
+Button-1: Layer 1 - clockwise
+Button-2: Layer 1 - counterclockwise
+Button-3: Layer 1 - button
+Button-4: Layer 2 - clockwise
+Button-5: Layer 2 - counterclockwise
+Button-6: Layer 2 - button
+Button-7: Layer 3 - clockwise
+Button-8: Layer 3 - counterclockwise
+Button-9: Layer 3 - button
 ```
-
-🤝 Credits
-
-This blueprint is a rework and improvement of the work by fangathome. Huge thanks for the original logic and inspiration!
-
----
-
-this documentation is AI-generated
