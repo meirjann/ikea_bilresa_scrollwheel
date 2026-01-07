@@ -1,19 +1,17 @@
 blueprint:
-  name: "IKEA Bilresa Scroll Wheel – One Layer (Matter/Universal + Media)"
-  description: >
-    Advanced Matter-optimized controller for the IKEA Bilresa Scroll Wheel. 
-    Now supports Lights, Numbers, and Media Player Volume.
+  name: "IKEA Bilresa Scroll Wheel"
+  description: Advanced Matter-optimized controller for the IKEA Bilresa Scroll Wheel. 
   domain: automation
   input:
     # --- Entities ---
     scroll_right_event:
-      name: "Scroll Wheel Event – Clockwise"
+      name: "Scroll Wheel Event - Clockwise"
       description: "Increase Value. Usually Button 1, 4, or 7."
       selector:
         entity:
           domain: event
     scroll_left_event:
-      name: "Scroll Wheel Event – Counterclockwise"
+      name: "Scroll Wheel Event - Counterclockwise"
       description: "Decrease Value. Usually Button 2, 5, or 8."
       selector:
         entity:
