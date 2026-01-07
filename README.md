@@ -8,6 +8,7 @@ Inspired by [fangathome/ikea_bilresa_scrollwheel](https://github.com/fangathome/
 >
 > Due to this issue the automation gets unreliable if you **scroll > 7** "clicks". I'll fix it until the PR is live.
 
+<a href="https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fgithub.com%2Fmeirjann%2Fikea_bilresa_scrollwheel%2Fblob%2Fmain%2Fikea_bilresa_scroll_wheel.yaml" target="_blank">![Open your Home Assistant instance and show the blueprint import dialog with a specific blueprint pre-filled.](https://my.home-assistant.io/badges/blueprint_import.svg)</a>
 
 ## Features
 
