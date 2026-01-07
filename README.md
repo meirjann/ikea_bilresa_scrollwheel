@@ -1,19 +1,21 @@
 # IKEA Bilresa Scroll Wheel – One Layer (Matter/Universal)
 
-Inspired by [fangathome/ikea_bilresa_scrollwheel](https://github.com/fangathome/ikea_bilresa_scrollwheel), I’ve created a simple blueprint to control the new **IKEA Bilresa Scroll Wheel** over Matter.
+Inspired by [fangathome/ikea_bilresa_scrollwheel](https://github.com/fangathome/ikea_bilresa_scrollwheel), I've created a simple blueprint to control the new **IKEA Bilresa Scroll Wheel** over Matter.
 
 > [!CAUTION]
-> Currently, the Home Assistant Core can’t process multipresses from Matter live. It waits until the press or scroll is finished. This can be annoying when controlling lights. I’ll update this blueprint once this PR is live:
+> Currently, the Home Assistant Core can't process multipresses from Matter live. It waits until the press or scroll is finished. This can be annoying when controlling lights. I'll update this blueprint once this PR is live:
 > https://github.com/home-assistant/core/pull/159045
+>
+> Due to this issue the automation gets unreliable if you **scroll > 7** "clicks". I'll fix it until the PR is live.
 
 
 ## Features
 
-- Control lights, a media player and number entities.
-- Customise the step size from one scroll „click“ to 20.
+- Control lights, a media player or any number entities with the scroll wheel.
+- Create custom actions for the centre button including single, double and triple presses and holds.
+- Customise the step size from one scroll "click" to 20.
 - Enable scroll lock for lights to prevent them from being turned off.
 - Set a minimum brightness for your lights.
-- Create custom actions for the centre button including single, double and triple presses and holds.
 
 ![Blueprint example image in home assistant](https://github.com/meirjann/ikea_bilresa_scrollwheel/blob/main/screenshots/blueprint.png)
 
@@ -21,7 +23,7 @@ Inspired by [fangathome/ikea_bilresa_scrollwheel](https://github.com/fangathome/
 
 ### 1. Multi-Layer Switch
 
-The Bilresa Scroll Wheel has three „layers“ indicated by small LEDs. However, this blueprint only controls one layer.
+The Bilresa Scroll Wheel has three "layers" indicated by small LEDs. However, this blueprint only controls one layer.
 
 > [!IMPORTANT]
 > To use all three layers, create this automation three times, selecting the appropriate event entities for each layer.
