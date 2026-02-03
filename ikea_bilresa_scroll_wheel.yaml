@@ -116,7 +116,8 @@ action:
       
       is_on: "{{ states(target_ent) not in ['off', 'unavailable', 'unknown', 'standby'] }}"
       
-      press_count: "{{ trigger.to_state.attributes.totalNumberOfPressesCounted | int(1) if trigger is defined and trigger.to_state is defined else 1 }}"
+      # press_count: "{{ trigger.to_state.attributes.totalNumberOfPressesCounted | int(1) if trigger is defined and trigger.to_state is defined else 1 }}"
+      press_count: "{{ trigger.to_state.attributes.get('totalNumberOfPressesCounted', 1) | int }}"
       event_type: "{{ state_attr(trigger.entity_id, 'event_type') if trigger is defined else 'none' }}"
 
   - choose:
