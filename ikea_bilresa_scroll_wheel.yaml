@@ -188,7 +188,7 @@ action:
                       volume_level: >
                         {% set calc = (current_val - (step_v * press_count)) | int %}
                         {{ ([calc, 0] | max) / 100 }}
-                - conditions: "{{ is_media }}"
+              - conditions: "{{ is_fan }}"
                 sequence:
                   - service: fan.percentage_set
                     target:
