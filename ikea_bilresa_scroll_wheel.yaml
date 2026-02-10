@@ -1,5 +1,6 @@
 blueprint:
   name: "IKEA Bilresa Scroll Wheel"
+  author: meirjann
   description: Advanced Matter-optimized controller for the IKEA Bilresa Scroll Wheel. 
   domain: automation
   input:
