@@ -1,0 +1,113 @@
+alias: Bilresa - Grün - L1
+description: ""
+use_blueprint:
+  path: meirjann/ikea_bilresa_scroll_wheel.yaml
+  input:
+    scroll_right_event: event.bilresa_scroll_wheel_taste_1_2
+    scroll_left_event: event.bilresa_scroll_wheel_taste_2_2
+    center_button_event: event.bilresa_scroll_wheel_taste_3_2
+    target_entity: light.kajplats_e27_cws_globe_1055lm_2
+    action_hold:
+      - action: scene.create
+        metadata: {}
+        data:
+          scene_id: kitchen_light_prev
+          snapshot_entities:
+            - light.kajplats_e27_cws_globe_1055lm_2
+      - if:
+          - condition: state
+            entity_id: switch.adaptive_lighting_kuche
+            state:
+              - "on"
+        then:
+          - action: light.turn_on
+            metadata: {}
+            target:
+              entity_id: light.kajplats_e27_cws_globe_1055lm_2
+            data:
+              rgb_color:
+                - 226
+                - 36
+                - 0
+          - delay:
+              hours: 0
+              minutes: 0
+              seconds: 0
+              milliseconds: 500
+          - action: light.toggle
+            metadata: {}
+            target:
+              entity_id: light.kajplats_e27_cws_globe_1055lm_2
+            data: {}
+          - delay:
+              hours: 0
+              minutes: 0
+              seconds: 0
+              milliseconds: 500
+          - action: light.toggle
+            metadata: {}
+            target:
+              entity_id: light.kajplats_e27_cws_globe_1055lm_2
+            data: {}
+          - delay:
+              hours: 0
+              minutes: 0
+              seconds: 0
+              milliseconds: 500
+        else:
+          - action: light.turn_on
+            metadata: {}
+            target:
+              entity_id: light.kajplats_e27_cws_globe_1055lm_2
+            data:
+              rgb_color:
+                - 102
+                - 157
+                - 52
+          - delay:
+              hours: 0
+              minutes: 0
+              seconds: 0
+              milliseconds: 500
+          - action: light.toggle
+            metadata: {}
+            target:
+              entity_id: light.kajplats_e27_cws_globe_1055lm_2
+            data: {}
+          - delay:
+              hours: 0
+              minutes: 0
+              seconds: 0
+              milliseconds: 500
+          - action: light.toggle
+            metadata: {}
+            target:
+              entity_id: light.kajplats_e27_cws_globe_1055lm_2
+            data: {}
+          - delay:
+              hours: 0
+              minutes: 0
+              seconds: 0
+              milliseconds: 500
+      - action: scene.turn_on
+        metadata: {}
+        target:
+          entity_id: scene.kitchen_light_prev
+        data: {}
+      - action: scene.delete
+        metadata: {}
+        target:
+          entity_id: scene.kitchen_light_prev
+        data: {}
+      - type: toggle
+        device_id: e75fc00378a39539d17d7b44728d995e
+        entity_id: 35dd3c3970da0a9edbca4abcee9d09be
+        domain: switch
+    step_size: 10
+    action_single:
+      - action: light.toggle
+        metadata: {}
+        target:
+          area_id: kuche
+        data: {}
+
