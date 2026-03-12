@@ -164,31 +164,31 @@ action:
                 data:
                   rgb_color: [226, 36, 0]
                   transition: 0.5
-              - delay: { milliseconds: 500 }
+              - delay: { milliseconds: 1000 }
               - service: light.toggle
                 target:
                   entity_id: !input target_entity
                 data:
                   transition: 0.5
-              - delay: { milliseconds: 400 }
+              - delay: { milliseconds: 1000 }
               - service: light.toggle
                 target:
                   entity_id: !input target_entity
                 data:
                   transition: 0.5
-              - delay: { milliseconds: 400 }
+              - delay: { milliseconds: 1000 }
               - service: light.toggle
                 target:
                   entity_id: !input target_entity
                 data:
                   transition: 0.5
-              - delay: { milliseconds: 400 }
+              - delay: { milliseconds: 1000 }
               - service: light.toggle
                 target:
                   entity_id: !input target_entity
                 data:
                   transition: 0.5
-              - delay: { milliseconds: 400 }
+              - delay: { milliseconds: 1000 }
             else:
               # Grün blinken (2-mal) - Wird eingeschaltet
               - service: light.turn_on
@@ -197,31 +197,31 @@ action:
                 data:
                   rgb_color: [102, 157, 52]
                   transition: 0.5
-              - delay: { milliseconds: 500 }
+              - delay: { milliseconds: 1000 }
               - service: light.toggle
                 target:
                   entity_id: !input target_entity
                 data:
                   transition: 0.5
-              - delay: { milliseconds: 400 }
+              - delay: { milliseconds: 1000 }
               - service: light.toggle
                 target:
                   entity_id: !input target_entity
                 data:
                   transition: 0.5
-              - delay: { milliseconds: 400 }
+              - delay: { milliseconds: 1000 }
               - service: light.toggle
                 target:
                   entity_id: !input target_entity
                 data:
                   transition: 0.5
-              - delay: { milliseconds: 400 }
+              - delay: { milliseconds: 1000 }
               - service: light.toggle
                 target:
                   entity_id: !input target_entity
                 data:
                   transition: 0.5
-              - delay: { milliseconds: 400 }
+              - delay: { milliseconds: 1000 }
           
           - service: scene.turn_on
             target:
