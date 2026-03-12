@@ -168,18 +168,26 @@ action:
               - service: light.toggle
                 target:
                   entity_id: !input target_entity
+                data:
+                  transition: 0.5
               - delay: { milliseconds: 400 }
               - service: light.toggle
                 target:
                   entity_id: !input target_entity
+                data:
+                  transition: 0.5
               - delay: { milliseconds: 400 }
               - service: light.toggle
                 target:
                   entity_id: !input target_entity
+                data:
+                  transition: 0.5
               - delay: { milliseconds: 400 }
               - service: light.toggle
                 target:
                   entity_id: !input target_entity
+                data:
+                  transition: 0.5
               - delay: { milliseconds: 400 }
             else:
               # Grün blinken (2-mal) - Wird eingeschaltet
@@ -193,18 +201,26 @@ action:
               - service: light.toggle
                 target:
                   entity_id: !input target_entity
+                data:
+                  transition: 0.5
               - delay: { milliseconds: 400 }
               - service: light.toggle
                 target:
                   entity_id: !input target_entity
+                data:
+                  transition: 0.5
               - delay: { milliseconds: 400 }
               - service: light.toggle
                 target:
                   entity_id: !input target_entity
+                data:
+                  transition: 0.5
               - delay: { milliseconds: 400 }
               - service: light.toggle
                 target:
                   entity_id: !input target_entity
+                data:
+                  transition: 0.5
               - delay: { milliseconds: 400 }
           
           - service: scene.turn_on
