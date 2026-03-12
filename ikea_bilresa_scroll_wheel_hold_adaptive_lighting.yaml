@@ -1,6 +1,6 @@
 blueprint:
   name: "IKEA Bilresa Scroll Wheel - Adaptive Lighting Hold"
-  description: "Erweiterter Controller für das IKEA Bilresa Scroll Wheel. Beim Halten wird Adaptive Lighting umgeschaltet und die Lampe blinkt als Feedback."
+  description: "Erweiterter Controller für das IKEA Bilresa Scroll Wheel. Beim Halten wird Adaptive Lighting umgeschaltet und die Lampe blinkt zweimal als Feedback."
   domain: automation
   input:
     # --- Entities ---
@@ -103,7 +103,6 @@ action:
       
       is_on: "{{ states(target_ent) not in ['off', 'unavailable', 'unknown', 'standby'] }}"
       
-      # Fix für den ReadOnlyDict Fehler: .get() nutzen
       press_count: "{{ trigger.to_state.attributes.get('totalNumberOfPressesCounted', 1) | int }}"
       event_type: "{{ state_attr(trigger.entity_id, 'event_type') if trigger is defined else 'none' }}"
 
@@ -158,37 +157,53 @@ action:
                 entity_id: !input adaptive_lighting_entity
                 state: "on"
             then:
-              # Rot blinken (Ausschalten)
+              # Rot blinken (2-mal) - Wird ausgeschaltet
               - service: light.turn_on
                 target:
                   entity_id: !input target_entity
                 data:
                   rgb_color: [226, 36, 0]
-              - delay: { milliseconds: 500 }
+              - delay: { milliseconds: 400 }
               - service: light.toggle
                 target:
                   entity_id: !input target_entity
-              - delay: { milliseconds: 500 }
+              - delay: { milliseconds: 400 }
               - service: light.toggle
                 target:
                   entity_id: !input target_entity
-              - delay: { milliseconds: 500 }
+              - delay: { milliseconds: 400 }
+              - service: light.toggle
+                target:
+                  entity_id: !input target_entity
+              - delay: { milliseconds: 400 }
+              - service: light.toggle
+                target:
+                  entity_id: !input target_entity
+              - delay: { milliseconds: 400 }
             else:
-              # Grün blinken (Einschalten)
+              # Grün blinken (2-mal) - Wird eingeschaltet
               - service: light.turn_on
                 target:
                   entity_id: !input target_entity
                 data:
                   rgb_color: [102, 157, 52]
-              - delay: { milliseconds: 500 }
+              - delay: { milliseconds: 400 }
               - service: light.toggle
                 target:
                   entity_id: !input target_entity
-              - delay: { milliseconds: 500 }
+              - delay: { milliseconds: 400 }
               - service: light.toggle
                 target:
                   entity_id: !input target_entity
-              - delay: { milliseconds: 500 }
+              - delay: { milliseconds: 400 }
+              - service: light.toggle
+                target:
+                  entity_id: !input target_entity
+              - delay: { milliseconds: 400 }
+              - service: light.toggle
+                target:
+                  entity_id: !input target_entity
+              - delay: { milliseconds: 400 }
           
           - service: scene.turn_on
             target:
