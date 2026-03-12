@@ -231,6 +231,7 @@ action:
           - service: scene.delete
             target:
               entity_id: scene.bilresa_hold_temp_scene
+          - delay: { milliseconds: 1000 }
           - service: homeassistant.toggle
             target:
               entity_id: !input adaptive_lighting_entity
