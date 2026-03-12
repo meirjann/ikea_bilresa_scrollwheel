@@ -1,59 +1,42 @@
 blueprint:
   name: "IKEA Bilresa Scroll Wheel - Adaptive Lighting Hold"
-  description: >
-    Erweiterter Controller für das IKEA Bilresa Scroll Wheel. 
-    Zusätzlich zur Standard-Steuerung wird beim Gedrückthalten (Hold) der Adaptive Lighting Modus umgeschaltet, 
-    begleitet von einem visuellen Feedback (Blinken).
+  description: "Erweiterter Controller für das IKEA Bilresa Scroll Wheel mit Adaptive Lighting Hold Funktion."
   domain: automation
   input:
-    # --- Entities ---
     scroll_right_event:
       name: "Scroll Wheel Event - Im Uhrzeigersinn"
-      description: "Normalerweise Button 1, 4 oder 7."
       selector:
         entity:
           domain: event
     scroll_left_event:
       name: "Scroll Wheel Event - Gegen den Uhrzeigersinn"
-      description: "Normalerweise Button 2, 5 oder 8."
       selector:
         entity:
           domain: event
     center_button_event:
       name: "Center Button Event"
-      description: "Normalerweise Button 3, 6 oder 9."
       selector:
         entity:
           domain: event
-
     target_entity:
-      name: "Licht / Ziel-Entität"
-      description: "Die Lampe, die gesteuert werden soll (und die beim Hold blinkt)."
+      name: "Licht"
       selector:
         entity:
-          filter:
-            domain:
-              - light
-
+          domain: light
     adaptive_lighting_entity:
       name: "Adaptive Lighting Schalter"
-      description: "Der Switch oder Boolean, der beim Gedrückthalten umgeschaltet werden soll."
       selector:
         entity:
           domain:
             - switch
             - input_boolean
-
-    # --- Settings ---
     lock_when_off:
-      name: "Sperren wenn aus (Nur Licht)"
-      description: "Verhindert, dass Drehen das Licht einschaltet, wenn es gerade aus ist."
+      name: "Sperren wenn aus"
       default: true
       selector:
         boolean: {}
     min_value:
       name: "Minimale Helligkeit"
-      description: "Das Licht unterschreitet diesen Wert beim Runterscrollen nicht."
       default: 10
       selector:
         number:
@@ -62,14 +45,11 @@ blueprint:
           unit_of_measurement: "%"
     step_size:
       name: "Schrittweite"
-      description: "Prozentuale Änderung pro Scroll-Tick."
       default: 5
       selector:
         number:
           min: 1
           max: 20
-
-    # --- Actions for Center Button ---
     action_single:
       name: "Einfacher Druck"
       default: []
@@ -104,29 +84,16 @@ action:
       lock_act: !input lock_when_off
       min_v: !input min_value
       step_v: !input step_size
-      
-      domain: "{{ target_ent.split('.')[0] }}"
-      is_light: "{{ domain == 'light' }}"
-      
-      current_val: >
-        {% if is_light %}
-          {{ (state_attr(target_ent, 'brightness') | int(0) / 2.55) | round(0) | int }}
-        {% else %}
-          0
-        {% endif %}
-      
       is_on: "{{ states(target_ent) not in ['off', 'unavailable', 'unknown', 'standby'] }}"
-      
       press_count: "{{ trigger.to_state.attributes.totalNumberOfPressesCounted | int(1) if trigger is defined and trigger.to_state is defined else 1 }}"
       event_type: "{{ state_attr(trigger.entity_id, 'event_type') if trigger is defined else 'none' }}"
+      current_val: "{{ (state_attr(target_ent, 'brightness') | int(0) / 2.55) | round(0) | int }}"
 
   - choose:
-      # --- SCROLL RIGHT (Increase) ---
+      # --- SCROLL RIGHT ---
       - conditions:
           - condition: template
-            value_template: "{{ trigger.id == 'right' }}"
-          - condition: template
-            value_template: "{{ is_on or not lock_act }}"
+            value_template: "{{ trigger.id == 'right' and (is_on or not lock_act) }}"
         sequence:
           - service: light.turn_on
             target:
@@ -134,12 +101,10 @@ action:
             data:
               brightness_pct: "{{ [ (current_val + (step_v * press_count)) | int, 100 ] | min }}"
 
-      # --- SCROLL LEFT (Decrease) ---
+      # --- SCROLL LEFT ---
       - conditions:
           - condition: template
-            value_template: "{{ trigger.id == 'left' }}"
-          - condition: template
-            value_template: "{{ is_on }}"
+            value_template: "{{ trigger.id == 'left' and is_on }}"
         sequence:
           - service: light.turn_on
             target:
@@ -147,10 +112,9 @@ action:
             data:
               brightness_pct: >
                 {% set calc = (current_val - (step_v * press_count)) | int %}
-                {% set minimum = min_v | int %}
-                {{ [calc, minimum, 0] | max }}
+                {{ [calc, min_v | int, 0] | max }}
 
-      # --- CENTER BUTTON ---
+      # --- CENTER BUTTON ACTIONS ---
       - conditions: "{{ trigger.id == 'center' and (event_type == 'short_release' or event_type == 'multi_press_1') }}"
         sequence: !input action_single
       - conditions: "{{ trigger.id == 'center' and (event_type == 'multi_press_2' or press_count == 2) }}"
@@ -161,55 +125,54 @@ action:
       # --- HOLD ACTION (Adaptive Lighting) ---
       - conditions: "{{ trigger.id == 'center' and event_type == 'long_press' }}"
         sequence:
-          - action: scene.create
+          - service: scene.create
             data:
               scene_id: bilresa_hold_snapshot
               snapshot_entities:
                 - !input target_entity
-          - if:
-              - condition: state
-                entity_id: !input adaptive_lighting_entity
-                state: "on"
-            then:
-              # Blinken Rot (Wird ausgeschaltet)
-              - action: light.turn_on
-                target:
-                  entity_id: !input target_entity
-                data:
-                  rgb_color: [226, 36, 0]
-              - delay: { milliseconds: 500 }
-              - action: light.toggle
-                target:
-                  entity_id: !input target_entity
-              - delay: { milliseconds: 500 }
-              - action: light.toggle
-                target:
-                  entity_id: !input target_entity
-              - delay: { milliseconds: 500 }
-            else:
-              # Blinken Grün (Wird eingeschaltet)
-              - action: light.turn_on
+          - choose:
+              - conditions:
+                  - condition: state
+                    entity_id: !input adaptive_lighting_entity
+                    state: "on"
+                sequence:
+                  - service: light.turn_on
+                    target:
+                      entity_id: !input target_entity
+                    data:
+                      rgb_color: [226, 36, 0]
+                  - delay: { milliseconds: 500 }
+                  - service: light.toggle
+                    target:
+                      entity_id: !input target_entity
+                  - delay: { milliseconds: 500 }
+                  - service: light.toggle
+                    target:
+                      entity_id: !input target_entity
+                  - delay: { milliseconds: 500 }
+            default:
+              - service: light.turn_on
                 target:
                   entity_id: !input target_entity
                 data:
                   rgb_color: [102, 157, 52]
               - delay: { milliseconds: 500 }
-              - action: light.toggle
+              - service: light.toggle
                 target:
                   entity_id: !input target_entity
               - delay: { milliseconds: 500 }
-              - action: light.toggle
+              - service: light.toggle
                 target:
                   entity_id: !input target_entity
               - delay: { milliseconds: 500 }
           
-          - action: scene.turn_on
+          - service: scene.turn_on
             target:
               entity_id: scene.bilresa_hold_snapshot
-          - action: scene.delete
+          - service: scene.delete
             data:
-              entity_id: scene.bilresa_hold_snapshot
-          - action: homeassistant.toggle
+              scene_id: bilresa_hold_snapshot
+          - service: homeassistant.toggle
             target:
               entity_id: !input adaptive_lighting_entity
 
