@@ -163,7 +163,8 @@ action:
                   entity_id: !input target_entity
                 data:
                   rgb_color: [226, 36, 0]
-              - delay: { milliseconds: 400 }
+                  transition: 0.5
+              - delay: { milliseconds: 500 }
               - service: light.toggle
                 target:
                   entity_id: !input target_entity
@@ -187,7 +188,8 @@ action:
                   entity_id: !input target_entity
                 data:
                   rgb_color: [102, 157, 52]
-              - delay: { milliseconds: 400 }
+                  transition: 0.5
+              - delay: { milliseconds: 500 }
               - service: light.toggle
                 target:
                   entity_id: !input target_entity
@@ -208,6 +210,8 @@ action:
           - service: scene.turn_on
             target:
               entity_id: scene.bilresa_hold_temp_scene
+            data:
+              transition: 1
           - service: homeassistant.toggle
             target:
               entity_id: !input adaptive_lighting_entity
