@@ -1,6 +1,7 @@
 blueprint:
   name: "IKEA Bilresa Scroll Wheel"
-  description: Advanced Matter-optimized controller for the IKEA Bilresa Scroll Wheel. 
+  author: meirjann
+  description: Advanced Matter-optimized controller for the IKEA Bilresa Scroll Wheel. (v.1.1.0)
   domain: automation
   input:
     # --- Entities ---
@@ -34,6 +35,7 @@ blueprint:
               - number
               - input_number
               - media_player
+              - fan
 
     # --- Settings ---
     lock_when_off:
@@ -103,6 +105,7 @@ action:
       domain: "{{ target_ent.split('.')[0] }}"
       is_light: "{{ domain == 'light' }}"
       is_media: "{{ domain == 'media_player' }}"
+      is_fan: "{{ domain == 'fan' }}"
       
       # Calculate current value (normalized to 0-100)
       current_val: >
@@ -116,7 +119,8 @@ action:
       
       is_on: "{{ states(target_ent) not in ['off', 'unavailable', 'unknown', 'standby'] }}"
       
-      press_count: "{{ trigger.to_state.attributes.totalNumberOfPressesCounted | int(1) if trigger is defined and trigger.to_state is defined else 1 }}"
+      # press_count: "{{ trigger.to_state.attributes.totalNumberOfPressesCounted | int(1) if trigger is defined and trigger.to_state is defined else 1 }}"
+      press_count: "{{ trigger.to_state.attributes.get('totalNumberOfPressesCounted', 1) | int }}"
       event_type: "{{ state_attr(trigger.entity_id, 'event_type') if trigger is defined else 'none' }}"
 
   - choose:
@@ -142,6 +146,13 @@ action:
                       entity_id: !input target_entity
                     data:
                       volume_level: "{{ ([ (current_val + (step_v * press_count)) | int, 100 ] | min) / 100 }}"
+              - conditions: "{{ is_fan }}"
+                sequence:
+                  - service: fan.set_percentage
+                    target:
+                      entity_id: !input target_entity
+                    data:
+                      percentage: "{{ ([ (current_val + (step_v * press_count)) | int, 100 ] | min) / 100 }}"
               - conditions: "{{ domain in ['number', 'input_number'] }}"
                 sequence:
                   - service: "{{ domain }}.set_value"
@@ -177,6 +188,15 @@ action:
                       volume_level: >
                         {% set calc = (current_val - (step_v * press_count)) | int %}
                         {{ ([calc, 0] | max) / 100 }}
+              - conditions: "{{ is_fan }}"
+                sequence:
+                  - service: fan.percentage_set
+                    target:
+                      entity_id: !input target_entity
+                    data:
+                      percentage: >
+                        {% set calc = (current_val - (step_v * press_count)) | int %}
+                        {{ ([calc, 0] | max) / 100 }}
               - conditions: "{{ domain in ['number', 'input_number'] }}"
                 sequence:
                   - service: "{{ domain }}.set_value"
@@ -199,3 +219,4 @@ action:
 
 mode: queued
 max: 20
+  
