@@ -195,8 +195,7 @@ action:
                 target:
                   entity_id: !input target_entity
                 data:
-                  
-                  rgb_color: [0,255,255]
+                  rgb_color: [102, 157, 52]
                   transition: 0.5
               - delay: { milliseconds: 500 }
               - service: light.toggle
