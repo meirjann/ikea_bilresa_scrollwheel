@@ -227,7 +227,7 @@ action:
             target:
               entity_id: scene.bilresa_hold_temp_scene
             data:
-              transition: 400
+              transition: 0.5
           - service: homeassistant.toggle
             target:
               entity_id: !input adaptive_lighting_entity
