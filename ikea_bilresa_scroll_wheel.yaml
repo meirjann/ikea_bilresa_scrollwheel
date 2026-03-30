@@ -1,5 +1,5 @@
 blueprint:
-  name: "IKEA Bilresa Scroll Wheel"
+  name: "IKEA Bilresa Scroll Wheel - TEST EVENTS"
   author: meirjann
   description: Advanced Matter-optimized controller for the IKEA Bilresa Scroll Wheel. (v.1.1.0)
   domain: automation
@@ -22,7 +22,7 @@ blueprint:
       description: "Usually Button 3, 6, or 9."
       selector:
         entity:
-          domain: event
+          domain: button
 
     target_entity:
       name: "Target Entity"
@@ -88,12 +88,27 @@ trigger:
   - platform: state
     entity_id: !input scroll_right_event
     id: "right"
+    not_from:
+      - "unavailable"
+    not_to:
+      - "unavailable"
+      - "unknown"
   - platform: state
     entity_id: !input scroll_left_event
     id: "left"
+    not_from:
+      - "unavailable"
+    not_to:
+      - "unavailable"
+      - "unknown"
   - platform: state
     entity_id: !input center_button_event
     id: "center"
+    not_from:
+      - "unavailable"
+    not_to:
+      - "unavailable"
+      - "unknown"
 
 action:
   - variables:
