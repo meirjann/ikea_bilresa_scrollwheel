@@ -205,7 +205,7 @@ action:
                         {{ ([calc, 0] | max) / 100 }}
               - conditions: "{{ is_fan }}"
                 sequence:
-                  - service: fan.percentage_set
+                  - service: fan.set_percentage
                     target:
                       entity_id: !input target_entity
                     data:
