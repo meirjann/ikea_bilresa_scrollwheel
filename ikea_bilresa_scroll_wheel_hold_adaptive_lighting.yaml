@@ -77,12 +77,27 @@ trigger:
   - platform: state
     entity_id: !input scroll_right_event
     id: "right"
+    not_from:
+      - "unavailable"
+    not_to:
+      - "unavailable"
+      - "unknown"
   - platform: state
     entity_id: !input scroll_left_event
     id: "left"
+    not_from:
+      - "unavailable"
+    not_to:
+      - "unavailable"
+      - "unknown"
   - platform: state
     entity_id: !input center_button_event
     id: "center"
+    not_from:
+      - "unavailable"
+    not_to:
+      - "unavailable"
+      - "unknown"
 
 action:
   - variables:
